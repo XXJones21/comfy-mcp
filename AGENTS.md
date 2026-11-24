@@ -27,6 +27,14 @@ Hard guardrails — a PR breaking any of these should be rejected:
   signed URLs, analytics, and a cloud API client, none of which apply here. This repo is
   local-only, single-process, with no filesystem/multi-tenancy concerns to design around.
 
+**Temporary test exception — `canvas_*` tools (fork branch `canvas` only, not for upstream).**
+The `canvas_*` tools (`canvas_snapshot`, `canvas_layout`, `canvas_capture`, `canvas_focus`)
+may call the Canvas Bridge node pack's `/canvas_bridge/*` route on the targeted ComfyUI over
+HTTP, from `src/comfy_mcp/canvas.py` only, stdlib `urllib` only. The target comes from the
+same `COMFYUI_URL` / `COMFYUI_HOST` (+`COMFYUI_PORT`) resolution as `target._comfy_target`,
+loopback by default. No other tool gains HTTP. This lasts until comfy-cli ships equivalent
+`comfy canvas` commands; then the tools become `_run_comfy` passthroughs and this paragraph goes.
+
 A tool may COMPOSE more than one passthrough when the value is in the sequence, not new
 logic — `fetch_template` runs `templates fetch` then `validate`, telling the caller whether
 the template it wrote can run; `download_model` submits `model download --background` then
