@@ -82,7 +82,7 @@ server has no path to is Comfy Cloud itself: no cloud-hosted execution, no cloud
 cross-session cloud batches. Every tool here shells out to `comfy --where local`. Pick by where you
 want the work to run, or [install the cloud server too](#comfy-cloud-mcp).
 
-> **Status:** beta. 42 tools; core loop validated end-to-end against a live local ComfyUI
+> **Status:** beta. 46 tools; core loop validated end-to-end against a live local ComfyUI
 > (`server_info → run_workflow → fetch_outputs` → PNG on disk). CI runs pytest + ruff on
 > Python 3.10 and 3.14.
 
@@ -1068,7 +1068,7 @@ Set it in the client registration `env` block, same as `COMFY_BIN`:
 
 ## Tools
 
-42 tools, grouped below by what they do. Every tool runs `comfy` with the global
+46 tools, grouped below by what they do. Every tool runs `comfy` with the global
 `--json --where local` flags, unwraps comfy-cli's `envelope/1`, and returns its `data`.
 
 **Argument naming** is uniform, so an agent never has to guess it (the server's handshake

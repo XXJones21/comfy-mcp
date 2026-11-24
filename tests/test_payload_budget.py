@@ -109,7 +109,9 @@ _SERVER_SRC = Path(__file__).resolve().parents[1] / "src" / "comfy_mcp" / "serve
 # reads a whole graph's slots as one node's. The tree was already at ~16,337 of
 # 16,350, so no version of it fit the slack. Measured ~16,409 after the edit,
 # so the next growth is still a decision.
-_BUDGET_TOKENS = 16_450
+# Fork branch `canvas` (temporary test exception in AGENTS.md): the four canvas_*
+# tools add ~390 tokens after trimming their docstrings to the agent contract.
+_BUDGET_TOKENS = 16_850
 
 
 def _is_tool_decorated(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:

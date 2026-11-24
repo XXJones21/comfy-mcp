@@ -14655,18 +14655,13 @@ CanvasScope = str | list[str] | dict[str, Any]
 async def canvas_snapshot(
     scope: CanvasScope = "all", detail: str = "brief"
 ) -> dict[str, Any]:
-    """Read the live ComfyUI canvas as compact text with stable refs.
+    """Read the live ComfyUI canvas as text: one line per node with stable refs.
 
-    Needs the Canvas Bridge node pack and an open ComfyUI window (Desktop or a
-    browser tab). Returns ``text``: one line per node (``n12 KSampler "title"
-    in model←n3.MODEL out LATENT→n8.samples w seed=42``), grouped under
-    ``group g2 "Sampling" [n5 n6]`` lines, then a ``warnings:`` line (overlaps,
-    empty required inputs, nodes straddling a group, backward or very long links).
-    Refs (``n<id>``, ``g<id>``) stay the same for the life of a node or group.
-
-    ``scope``: "all" | "viewport" | "selection" | "group:g3" | a list of refs
-    (["n4", "n7", "g2"]). ``detail``: "brief" (first widgets, no geometry) or
-    "full" (all widgets plus ``@x,y wxh`` boxes).
+    Needs the Canvas Bridge node pack and an open ComfyUI window. ``text`` lists
+    nodes (``n12 KSampler "title" in model←n3.MODEL ...``) under their groups
+    (``g2``), then ``warnings:`` (overlaps, empty required inputs, backward or
+    very long links). ``scope``: "all" | "viewport" | "selection" | "group:g3" |
+    list of refs. ``detail``: "brief" or "full" (all widgets plus boxes).
     """
     return await asyncio.to_thread(
         canvas.call, "snapshot", {"scope": scope, "detail": detail}
@@ -14687,22 +14682,13 @@ async def canvas_layout(
     animate: bool = True,
     spacing: dict[str, float] | None = None,
 ) -> dict[str, Any]:
-    """Tidy the live canvas with a graph-aware, left-to-right layered layout.
+    """Tidy the live canvas: left-to-right layered layout, one undo step (Ctrl+Z).
 
-    Uses each node's real rendered size, reduces wire crossings, folds a stage's
-    nodes into compact columns inside its group, and top-aligns groups in one row.
-    Applied as ONE undo step (Ctrl+Z restores it) and animated so the user can see
-    what moved. Pinned nodes stay put.
-
-    ``groups``: "keep" (existing groups stay and are resized around their nodes;
-    the default when the graph has groups), "auto" (also create groups by role and
-    stage: Models, Settings, Prompts, "Clip 1"…, Post; the default when it has
-    none), or "none" (ignore groups). ``scope`` limits what moves (same forms as
-    ``canvas_snapshot``); the scoped block keeps its top-left corner.
-    ``spacing`` overrides gaps in px: colGap, rowGap, blockColGap, blockRowGap,
-    groupPad. Returns before/after counts (overlaps, crossings, long links) and
-    the groups it created or resized. Check the result with ``canvas_snapshot``
-    or ``canvas_capture``.
+    ``groups``: "keep" (resize existing groups; default when there are some),
+    "auto" (create stage groups: Models, Prompts, "Clip 1"...; default when none)
+    or "none". ``scope`` limits what moves (forms as ``canvas_snapshot``). Pinned
+    nodes stay. ``spacing``: px overrides (colGap, rowGap, blockColGap,
+    blockRowGap, groupPad). Returns before/after overlaps, crossings, long links.
     """
     return await asyncio.to_thread(
         canvas.call,
@@ -14727,16 +14713,12 @@ async def canvas_capture(
     padding: int = 40,
     background: str = "theme",
 ) -> dict[str, Any]:
-    """Save a PNG of part of the live canvas, framed and padded, for docs or review.
+    """Save a PNG of part of the live canvas (rendered off-screen) plus a JSON sidecar.
 
-    Rendered off-screen, so it does not depend on the window size or what is on
-    screen. ``scope``: "all", "viewport", "selection", "group:g3" or a list of
-    refs. ``scale``: 1 or 2 (capped to stay inside browser canvas limits).
-    ``background``: "theme" or "transparent". Writes ``<name>.png`` and a
-    ``<name>.json`` sidecar (refs, node types, boxes in image pixels, workflow
-    name) into ``out_dir`` (absolute; default ``<ComfyUI output>/canvas_bridge``).
-    Returns both paths. DOM widgets (multiline text boxes, Nodes 2.0 cards) are
-    not drawn.
+    ``scope`` as ``canvas_snapshot``. ``scale``: 1 or 2. ``background``: "theme"
+    or "transparent". Writes ``<name>.png``/``.json`` (refs and boxes in image
+    pixels) to ``out_dir`` (absolute; default ``<output>/canvas_bridge``) and
+    returns the paths. Multiline text boxes are not drawn.
     """
     return await asyncio.to_thread(
         canvas.call,
@@ -14763,10 +14745,9 @@ async def canvas_capture(
 async def canvas_focus(
     scope: CanvasScope = "all", zoom: float = 0.8, select: bool = False
 ) -> dict[str, Any]:
-    """Animate the live canvas view to frame refs, a group, the selection, or everything.
+    """Frame ``scope`` in the live canvas view; never changes the graph.
 
-    Changes only the view (and the selection when ``select`` is true), never the
-    graph. ``zoom`` is the share of the window the framed area fills (0.1-1).
+    ``zoom``: share of the window filled (0.1-1). ``select``: also select it.
     """
     return await asyncio.to_thread(
         canvas.call, "focus", {"scope": scope, "zoom": zoom, "select": select}
