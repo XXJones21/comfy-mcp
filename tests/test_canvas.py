@@ -172,3 +172,25 @@ def test_http_lives_only_in_the_canvas_module():
         if p.name != "canvas.py" and "urllib.request" in p.read_text(encoding="utf-8")
     ]
     assert offenders == []
+
+
+def test_act_sends_the_ops_and_a_timeout_that_scales(bridge):
+    calls, _ = bridge
+    ops = [{"op": "move", "ref": "n3", "right_of": "n2", "align": "pins"}] * 3
+    asyncio.run(server.canvas_act(ops=ops, capture_each=True, name="loop"))
+    c = calls[0]
+    assert c["url"].endswith("/canvas_bridge/act")
+    assert c["body"]["ops"] == ops
+    assert c["body"]["capture_each"] is True
+    assert c["body"]["name"] == "loop"
+    assert c["body"]["timeout"] == 30.0 + 3 * 8.0
+    assert "out_dir" not in c["body"]
+
+
+def test_move_is_a_single_move_op(bridge):
+    calls, _ = bridge
+    asyncio.run(server.canvas_move("n4", right_of="n1", gap=60, capture=True))
+    body = calls[0]["body"]
+    assert calls[0]["url"].endswith("/canvas_bridge/act")
+    assert body["ops"] == [{"op": "move", "ref": "n4", "right_of": "n1", "gap": 60}]
+    assert body["capture_each"] is True

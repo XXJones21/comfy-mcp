@@ -28,7 +28,8 @@ Hard guardrails — a PR breaking any of these should be rejected:
   local-only, single-process, with no filesystem/multi-tenancy concerns to design around.
 
 **Temporary test exception — `canvas_*` tools (fork branch `canvas` only, not for upstream).**
-The `canvas_*` tools (`canvas_snapshot`, `canvas_layout`, `canvas_capture`, `canvas_focus`)
+The `canvas_*` tools (`canvas_snapshot`, `canvas_layout`, `canvas_capture`, `canvas_focus`,
+`canvas_act`, `canvas_move`)
 may call the Canvas Bridge node pack's `/canvas_bridge/*` route on the targeted ComfyUI over
 HTTP, from `src/comfy_mcp/canvas.py` only, stdlib `urllib` only. The target comes from the
 same `COMFYUI_URL` / `COMFYUI_HOST` (+`COMFYUI_PORT`) resolution as `target._comfy_target`,

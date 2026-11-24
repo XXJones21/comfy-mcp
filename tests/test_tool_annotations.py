@@ -70,6 +70,8 @@ _EXPECTED = {
     "canvas_layout": (False, False, False, False, None),
     "canvas_capture": (False, False, True, False, None),
     "canvas_focus": (False, False, True, False, None),
+    "canvas_act": (False, True, False, False, None),
+    "canvas_move": (False, False, True, False, None),
 }
 
 

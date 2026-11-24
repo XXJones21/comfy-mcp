@@ -14762,6 +14762,93 @@ async def canvas_focus(
     )
 
 
+@mcp.tool(
+    annotations=types.ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=False,
+        openWorldHint=False,
+    )
+)
+async def canvas_act(
+    ops: list[dict[str, Any]],
+    capture_each: bool = False,
+    out_dir: str | None = None,
+    name: str | None = None,
+    stop_on_error: bool = True,
+) -> dict[str, Any]:
+    """Edit the live canvas one op at a time, shown by the agent cursor.
+
+    Each op is one undo step. ``ops`` items, refs as in ``canvas_snapshot``, x/y =
+    box top-left: ``{"op":"move","ref":"n3","x":0,"y":0}`` (or ``dx``/``dy``, or
+    ``right_of``/``left_of``/``below``/``above``:"n2" with ``gap``, ``align``:
+    top|center|bottom|pins); ``align`` {refs, edge: left|right|top|bottom|
+    center_x|center_y}; ``connect`` {from:"n1.out.MODEL", to:"n5.in.model"};
+    ``disconnect`` {to} or {from}; ``set`` {ref, widget, value}; ``add`` {type,
+    x/y or right_of..., title, as:"k"} (later ops use "$k"); ``delete`` {ref};
+    ``group`` {refs, title}; ``ungroup`` {group}; ``fit`` {group, refs or
+    box}; ``title`` {ref, title}. A "g3" move ref drags the group and its nodes.
+    ``capture_each`` saves a PNG after each op (paths in ``captures``). Returns
+    per-op results, metrics, quality ``targets`` and warnings. If the user
+    clicks or types, it stops with status "paused by user".
+    """
+    return await asyncio.to_thread(
+        canvas.call,
+        "act",
+        {
+            "ops": ops,
+            "capture_each": capture_each,
+            "out_dir": out_dir,
+            "name": name,
+            "stop_on_error": stop_on_error,
+        },
+    )
+
+
+@mcp.tool(
+    annotations=types.ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
+async def canvas_move(
+    ref: str,
+    x: float | None = None,
+    y: float | None = None,
+    right_of: str | None = None,
+    below: str | None = None,
+    gap: float | None = None,
+    align: str | None = None,
+    capture: bool = False,
+) -> dict[str, Any]:
+    """Move one node on the live canvas (``canvas_act`` with a single move).
+
+    Give ``x``/``y`` (box top-left) or ``right_of``/``below`` another ref, with
+    optional ``gap`` and ``align`` (top|center|bottom|pins). ``capture`` saves a
+    PNG after the move.
+    """
+    op = {
+        "op": "move",
+        "ref": ref,
+        "x": x,
+        "y": y,
+        "right_of": right_of,
+        "below": below,
+        "gap": gap,
+        "align": align,
+    }
+    return await asyncio.to_thread(
+        canvas.call,
+        "act",
+        {
+            "ops": [{k: v for k, v in op.items() if v is not None}],
+            "capture_each": capture,
+        },
+    )
+
+
 def main(args: list[str] | None = None) -> None:
     """Entry point: answer ``--help`` / ``--version``, else serve over stdio.
 

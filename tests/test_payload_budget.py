@@ -111,7 +111,9 @@ _SERVER_SRC = Path(__file__).resolve().parents[1] / "src" / "comfy_mcp" / "serve
 # so the next growth is still a decision.
 # Fork branch `canvas` (temporary test exception in AGENTS.md): the four canvas_*
 # tools add ~390 tokens after trimming their docstrings to the agent contract.
-_BUDGET_TOKENS = 16_850
+# canvas_act + canvas_move (per-node edits shown by the agent cursor) add ~250 more:
+# the op list is the contract an agent needs to place nodes one at a time.
+_BUDGET_TOKENS = 17_150
 
 
 def _is_tool_decorated(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:

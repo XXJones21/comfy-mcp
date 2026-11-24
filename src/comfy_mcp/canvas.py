@@ -28,7 +28,7 @@ from .errors import ComfyCliError
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = target.DEFAULT_COMFYUI_PORT
-OPS = ("snapshot", "layout", "capture", "focus")
+OPS = ("snapshot", "layout", "capture", "focus", "act")
 # Seconds the HTTP call may wait. The bridge's own relay timeout (sent as
 # `timeout` in the body) is a few seconds shorter, so the bridge answers first
 # with a clear "window did not answer" error.
@@ -37,6 +37,14 @@ _DEFAULT_RELAY_TIMEOUT_S = {"capture": 60.0}
 # Who the bridge credits each op to: its cursor, name pill and activity log use it.
 # One id per MCP server process, so two agents on one canvas show as two cursors.
 ACTOR = os.environ.get("COMFY_MCP_ACTOR") or f"agent:claude:{os.getpid()}"
+
+
+def _default_relay_timeout(op: str, body: dict[str, Any]) -> float:
+    if op == "act":
+        # Each op glides, applies and maybe captures: scale with the batch.
+        n = len(body.get("ops") or [])
+        return min(600.0, 30.0 + n * (8.0 if body.get("capture_each") else 4.0))
+    return _DEFAULT_RELAY_TIMEOUT_S.get(op, 20.0)
 
 
 def resolve_base_url() -> tuple[str, str]:
@@ -78,7 +86,7 @@ def call(op: str, args: dict[str, Any]) -> dict[str, Any]:
     base, source = resolve_base_url()
     body = {k: v for k, v in args.items() if v is not None}
     body.setdefault("actor", ACTOR)
-    relay_timeout = float(body.get("timeout") or _DEFAULT_RELAY_TIMEOUT_S.get(op, 20.0))
+    relay_timeout = float(body.get("timeout") or _default_relay_timeout(op, body))
     body["timeout"] = relay_timeout
     req = urllib.request.Request(
         f"{base}/canvas_bridge/{op}",
