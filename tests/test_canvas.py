@@ -72,6 +72,7 @@ def test_layout_drops_unset_options_and_forwards_the_rest(bridge):
     assert body["animate"] is True
     assert "timeout" in body
     assert body["force"] is False
+    assert body["actor"].startswith("agent:claude")
 
 
 def test_layout_forwards_force(bridge):

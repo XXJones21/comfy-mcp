@@ -17,6 +17,7 @@ Leaf module: imports only ``errors`` and ``target``; nothing here imports ``serv
 from __future__ import annotations
 
 import json
+import os
 import socket
 import urllib.error
 import urllib.request
@@ -33,6 +34,9 @@ OPS = ("snapshot", "layout", "capture", "focus")
 # with a clear "window did not answer" error.
 _HTTP_SLACK_S = 10.0
 _DEFAULT_RELAY_TIMEOUT_S = {"capture": 60.0}
+# Who the bridge credits each op to: its cursor, name pill and activity log use it.
+# One id per MCP server process, so two agents on one canvas show as two cursors.
+ACTOR = os.environ.get("COMFY_MCP_ACTOR") or f"agent:claude:{os.getpid()}"
 
 
 def resolve_base_url() -> tuple[str, str]:
@@ -73,6 +77,7 @@ def call(op: str, args: dict[str, Any]) -> dict[str, Any]:
         raise ComfyCliError(f"unknown canvas op {op!r}")
     base, source = resolve_base_url()
     body = {k: v for k, v in args.items() if v is not None}
+    body.setdefault("actor", ACTOR)
     relay_timeout = float(body.get("timeout") or _DEFAULT_RELAY_TIMEOUT_S.get(op, 20.0))
     body["timeout"] = relay_timeout
     req = urllib.request.Request(
