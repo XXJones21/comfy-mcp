@@ -61,6 +61,9 @@ def test_snapshot_posts_scope_and_detail_to_the_bridge(bridge):
     assert calls[0]["method"] == "POST"
     assert calls[0]["body"]["scope"] == ["n1", "g2"]
     assert calls[0]["body"]["detail"] == "full"
+    # The installed comfy-mcp names itself, so a stale cached install is obvious.
+    assert out["comfy_mcp"].startswith("comfy-mcp ")
+    assert calls[0]["body"]["client"] == out["comfy_mcp"]
 
 
 def test_layout_drops_unset_options_and_forwards_the_rest(bridge):

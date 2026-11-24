@@ -39,6 +39,31 @@ _DEFAULT_RELAY_TIMEOUT_S = {"capture": 60.0}
 ACTOR = os.environ.get("COMFY_MCP_ACTOR") or f"agent:claude:{os.getpid()}"
 
 
+def _client_version() -> str:
+    """``comfy-mcp <version>`` plus the git commit when installed from git (uvx).
+
+    Every canvas result carries it, so a stale cached install is obvious: compare it
+    with the branch tip before debugging a "missing" tool.
+    """
+    try:
+        from importlib import metadata
+
+        dist = metadata.distribution("comfy-mcp")
+        out = f"comfy-mcp {dist.version}"
+        raw = dist.read_text("direct_url.json")
+        commit = (
+            (json.loads(raw).get("vcs_info") or {}).get("commit_id") if raw else None
+        )
+        return f"{out} @{commit[:7]}" if commit else out
+    except Exception:  # noqa: BLE001 - version reporting must never break a call
+        from . import __version__
+
+        return f"comfy-mcp {__version__}"
+
+
+CLIENT = _client_version()
+
+
 def _default_relay_timeout(op: str, body: dict[str, Any]) -> float:
     if op == "act":
         # Each op glides, applies and maybe captures: scale with the batch.
@@ -86,6 +111,7 @@ def call(op: str, args: dict[str, Any]) -> dict[str, Any]:
     base, source = resolve_base_url()
     body = {k: v for k, v in args.items() if v is not None}
     body.setdefault("actor", ACTOR)
+    body.setdefault("client", CLIENT)
     relay_timeout = float(body.get("timeout") or _default_relay_timeout(op, body))
     body["timeout"] = relay_timeout
     req = urllib.request.Request(
@@ -115,4 +141,5 @@ def call(op: str, args: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(data, dict):
         data = {"result": data}
     data.setdefault("comfyui", base)
+    data.setdefault("comfy_mcp", CLIENT)
     return data
