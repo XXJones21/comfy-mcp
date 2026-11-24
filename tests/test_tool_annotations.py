@@ -65,6 +65,11 @@ _EXPECTED = {
     "list_workflow_notes": (True, False, True, False, None),
     "set_workflow_slot": (False, True, False, False, None),
     "vary_workflow": (False, True, True, False, None),
+    # Canvas Bridge (temporary test exception, AGENTS.md): local ComfyUI window only.
+    "canvas_snapshot": (True, False, True, False, None),
+    "canvas_layout": (False, False, False, False, None),
+    "canvas_capture": (False, False, True, False, None),
+    "canvas_focus": (False, False, True, False, None),
 }
 
 
