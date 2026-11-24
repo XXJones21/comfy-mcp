@@ -14681,6 +14681,7 @@ async def canvas_layout(
     groups: str | None = None,
     animate: bool = True,
     spacing: dict[str, float] | None = None,
+    force: bool = False,
 ) -> dict[str, Any]:
     """Tidy the live canvas: left-to-right layered layout, one undo step (Ctrl+Z).
 
@@ -14688,12 +14689,19 @@ async def canvas_layout(
     "auto" (create stage groups: Models, Prompts, "Clip 1"...; default when none)
     or "none". ``scope`` limits what moves (forms as ``canvas_snapshot``). Pinned
     nodes stay. ``spacing``: px overrides (colGap, rowGap, blockColGap,
-    blockRowGap, groupPad). Returns before/after overlaps, crossings, long links.
+    blockRowGap, groupPad). Returns before/after metrics. If the result would be
+    worse (``regressions``), nothing moves and ``applied`` is false, unless ``force``.
     """
     return await asyncio.to_thread(
         canvas.call,
         "layout",
-        {"scope": scope, "groups": groups, "animate": animate, "spacing": spacing},
+        {
+            "scope": scope,
+            "groups": groups,
+            "animate": animate,
+            "spacing": spacing,
+            "force": force,
+        },
     )
 
 

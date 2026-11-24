@@ -71,6 +71,13 @@ def test_layout_drops_unset_options_and_forwards_the_rest(bridge):
     assert body["spacing"] == {"colGap": 100}
     assert body["animate"] is True
     assert "timeout" in body
+    assert body["force"] is False
+
+
+def test_layout_forwards_force(bridge):
+    calls, _ = bridge
+    asyncio.run(server.canvas_layout(force=True))
+    assert calls[0]["body"]["force"] is True
 
 
 def test_layout_omits_groups_when_not_given(bridge):
