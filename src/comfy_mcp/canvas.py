@@ -63,6 +63,27 @@ def _client_version() -> str:
 
 CLIENT = _client_version()
 
+# Long edge of the copy of a capture returned inline as image content.
+INLINE_PX = 1568
+
+
+def pop_inline_png(data: dict[str, Any]) -> bytes | None:
+    """Take the bridge's small inline PNG out of a capture result (``None`` if absent).
+
+    ``data`` keeps the path and gains ``inline_size``; the base64 never goes back
+    as text. A bridge older than 0.3.2 sends none.
+    """
+    b64 = data.pop("inline_png_base64", None)
+    if not isinstance(b64, str) or not b64:
+        return None
+    import base64
+    import binascii
+
+    try:
+        return base64.b64decode(b64, validate=True)
+    except (binascii.Error, ValueError):
+        return None
+
 
 def _default_relay_timeout(op: str, body: dict[str, Any]) -> float:
     if op == "act":

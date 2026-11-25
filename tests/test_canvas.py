@@ -101,6 +101,41 @@ def test_capture_gets_a_longer_relay_timeout_and_its_http_wait_exceeds_it(bridge
     assert calls[0]["body"]["timeout"] == 60.0
     assert calls[0]["timeout"] > calls[0]["body"]["timeout"]
     assert calls[0]["body"]["scale"] == 2
+    assert calls[0]["body"]["inline_px"] == canvas.INLINE_PX
+
+
+def test_capture_returns_the_inline_png_as_image_content_with_the_path(bridge):
+    import base64
+
+    calls, state = bridge
+    png = bytes.fromhex("89504e470d0a1a0a") + b"fake"
+    state["reply"] = {
+        "ok": True,
+        "data": {
+            "path": "D:/x/a.png",
+            "inline_png_base64": base64.b64encode(png).decode(),
+            "inline_size": [1568, 800],
+        },
+    }
+    out = asyncio.run(server.canvas_capture(name="a", out_dir="D:/x"))
+    data, image = out
+    assert data["path"] == "D:/x/a.png"
+    assert "inline_png_base64" not in data
+    assert data["inline_size"] == [1568, 800]
+    assert image.data == png
+
+    # inline=False: paths only, nothing asked of the bridge.
+    out = asyncio.run(server.canvas_capture(name="a", out_dir="D:/x", inline=False))
+    assert isinstance(out, dict)
+    assert "inline_px" not in calls[-1]["body"]
+
+
+def test_move_accepts_a_centre_point(bridge):
+    calls, _ = bridge
+    asyncio.run(server.canvas_move(ref="n3", cx=500, cy=400))
+    assert calls[0]["body"]["ops"] == [
+        {"op": "move", "ref": "n3", "cx": 500, "cy": 400}
+    ]
 
 
 def test_focus_routes_to_the_focus_op(bridge):

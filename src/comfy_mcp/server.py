@@ -14720,15 +14720,17 @@ async def canvas_capture(
     scale: float = 1.0,
     padding: int = 40,
     background: str = "theme",
-) -> dict[str, Any]:
+    inline: bool = True,
+) -> Any:
     """Save a PNG of part of the live canvas (rendered off-screen) plus a JSON sidecar.
 
     ``scope`` as ``canvas_snapshot``. ``scale``: 1 or 2. ``background``: "theme"
     or "transparent". Writes ``<name>.png``/``.json`` (refs and boxes in image
     pixels) to ``out_dir`` (absolute; default ``<output>/canvas_bridge``) and
-    returns the paths. Multiline text boxes are not drawn.
+    returns the paths; ``inline`` adds the image (long edge <= 1568 px).
+    Multiline text boxes are not drawn.
     """
-    return await asyncio.to_thread(
+    data = await asyncio.to_thread(
         canvas.call,
         "capture",
         {
@@ -14738,8 +14740,13 @@ async def canvas_capture(
             "scale": scale,
             "padding": padding,
             "background": background,
+            "inline_px": canvas.INLINE_PX if inline else None,
         },
     )
+    png = canvas.pop_inline_png(data)
+    if not inline or png is None:
+        return data
+    return [data, Image(data=png, format="png")]
 
 
 @mcp.tool(
@@ -14780,7 +14787,8 @@ async def canvas_act(
     """Edit the live canvas one op at a time, shown by the agent cursor.
 
     Each op is one undo step. ``ops`` items, refs as in ``canvas_snapshot``, x/y =
-    box top-left: ``{"op":"move","ref":"n3","x":0,"y":0}`` (or ``dx``/``dy``, or
+    box top-left, cx/cy = its centre: ``{"op":"move","ref":"n3","x":0,"y":0}`` (or
+    ``cx``/``cy``, ``dx``/``dy``, or
     ``right_of``/``left_of``/``below``/``above``:"n2" with ``gap``, ``align``:
     top|center|bottom|pins); ``align`` {refs, edge: left|right|top|bottom|
     center_x|center_y}; ``connect`` {from:"n1.out.MODEL", to:"n5.in.model"};
@@ -14822,10 +14830,13 @@ async def canvas_move(
     gap: float | None = None,
     align: str | None = None,
     capture: bool = False,
+    cx: float | None = None,
+    cy: float | None = None,
 ) -> dict[str, Any]:
     """Move one node on the live canvas (``canvas_act`` with a single move).
 
-    Give ``x``/``y`` (box top-left) or ``right_of``/``below`` another ref, with
+    Give ``x``/``y`` (box top-left), ``cx``/``cy`` (box centre), or
+    ``right_of``/``below`` another ref, with
     optional ``gap`` and ``align`` (top|center|bottom|pins). ``capture`` saves a
     PNG after the move.
     """
@@ -14834,6 +14845,8 @@ async def canvas_move(
         "ref": ref,
         "x": x,
         "y": y,
+        "cx": cx,
+        "cy": cy,
         "right_of": right_of,
         "below": below,
         "gap": gap,
